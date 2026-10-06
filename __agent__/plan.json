@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "items": [
+    {
+      "title": "Check the existing project notes and current work state",
+      "status": "done"
+    },
+    {
+      "title": "Save a resumable deployment handoff",
+      "status": "done"
+    },
+    {
+      "title": "Confirm background work is stopped and close the session",
+      "status": "done"
+    }
+  ],
+  "updated_at": "2026-10-02T19:00:37.404Z",
+  "session_id": "01a0fdcb-8c15-763a-8e09-1e894b01aebc"
+}

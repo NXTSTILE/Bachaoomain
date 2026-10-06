@@ -1,0 +1,146 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+model User {
+  id                 String        @id @default(uuid())
+  email              String        @unique
+  name               String
+  password           String
+  role               String        @default("POSTER") // POSTER, HELPER; ADMIN is provisioned only by an operator.
+  collegeId          String        @default("centurion")
+  studyYear          Int? // Unknown for legacy accounts; required (1..6) for new registrations.
+  emailVerifiedAt    DateTime?
+  helperAssignedAt   DateTime?
+  helperAssignedById String?
+  helperAssignedBy   User?         @relation("HelperAppointment", fields: [helperAssignedById], references: [id], onDelete: SetNull)
+  appointedHelpers   User[]        @relation("HelperAppointment")
+  helpRequests       HelpRequest[]
+  helpReplies        HelpReply[]
+  quotas             DailyQuota[]
+  roleActions        RoleAudit[]   @relation("RoleActor")
+  roleChanges        RoleAudit[]   @relation("RoleTarget")
+  posts              Post[]
+  replies            Reply[]
+  createdAt          DateTime      @default(now())
+
+  @@index([collegeId])
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  category  String   @default("Academics")
+  collegeId String   @default("centurion")
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  replies   Reply[]
+  createdAt DateTime @default(now())
+
+  @@index([collegeId, createdAt])
+}
+
+model Reply {
+  id        String   @id @default(uuid())
+  content   String
+  collegeId String
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([postId, collegeId, createdAt])
+}
+
+model Otp {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  digest    String
+  attempts  Int      @default(0)
+  delivered Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model RateLimit {
+  key       String @id
+  count     Int
+  expiresAt BigInt
+
+  @@index([expiresAt])
+}
+
+// Private help content never shares the public Post/Reply tables.
+model HelpRequest {
+  id        String      @id @default(uuid())
+  title     String
+  content   String
+  category  String      @default("Academics")
+  collegeId String
+  authorId  String
+  author    User        @relation(fields: [authorId], references: [id])
+  replies   HelpReply[]
+  createdAt DateTime    @default(now())
+
+  @@index([collegeId, createdAt, id])
+  @@index([authorId, collegeId, createdAt])
+}
+
+model HelpReply {
+  id        String      @id @default(uuid())
+  content   String
+  collegeId String
+  requestId String
+  request   HelpRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User        @relation(fields: [authorId], references: [id])
+  createdAt DateTime    @default(now())
+
+  @@index([requestId, collegeId, createdAt, id])
+  @@index([authorId, collegeId])
+}
+
+model DailyQuota {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collegeId String
+  kind      String
+  day       String
+  createdAt DateTime @default(now())
+
+  @@id([userId, collegeId, kind, day])
+}
+
+model RoleAudit {
+  id        String   @id @default(uuid())
+  actorId   String
+  actor     User     @relation("RoleActor", fields: [actorId], references: [id])
+  targetId  String
+  target    User     @relation("RoleTarget", fields: [targetId], references: [id])
+  collegeId String
+  oldRole   String
+  newRole   String
+  action    String
+  createdAt DateTime @default(now())
+
+  @@index([collegeId, createdAt, id])
+}
+
+model AdminInvite {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  collegeId String
+  digest    String   @unique
+  delivered Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}

@@ -2,25 +2,60 @@
   "name": "typescript_project",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "overrides": {
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2"
+    },
+    "prisma": {
+      "mysql2": "3.24.5"
+    }
+  },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:backend": "eslint src/lib src/app/api src/proxy.ts prisma.config.ts prisma/*.ts tests/backend*.ts",
+    "typecheck": "next typegen && tsc --noEmit",
+    "typecheck:backend": "tsc --project tests/backend.tsconfig.json --noEmit",
+    "test": "npm run test:backend",
+    "test:backend": "tsx --test tests/backend*.test.ts",
+    "test:browser": "node tests/browser-smoke.mjs",
+    "test:browser:local": "tsx tests/browser-server.ts",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build",
+    "check:deployment": "tsx scripts/check-deployment.ts",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:turso": "tsx prisma/migrate-turso.ts --apply"
   },
   "dependencies": {
-    "next": "16.3.5",
+    "@libsql/client": "^0.18.0",
+    "@prisma/adapter-better-sqlite3": "^7.10.0",
+    "@prisma/adapter-libsql": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.11.1",
+    "dotenv": "^18.0.4",
+    "jose": "^6.2.12",
+    "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.5",
+    "eslint-config-next": "16.3.8",
+    "prisma": "^7.10.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }
